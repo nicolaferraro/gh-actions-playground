@@ -14,5 +14,21 @@ jobs:
       uses: engineerd/setup-kind@v0.1.0
       with:
         version: v0.6.1
+    - name: Setup Internal Registry
+      run: |
+        REGISTRY_CONTAINER_NAME='kind-registry'
+        REGISTRY_PORT='5000'
+        docker run -d -p "${REGISTRY_PORT}:5000" --restart=always --name "${REGISTRY_CONTAINER_NAME}" registry:2
+        cat <<EOF | kind create cluster --config=-
+        kind: Cluster
+        apiVersion: kind.x-k8s.io/v1alpha4
+        containerdConfigPatches: 
+        - |-
+          [plugins."io.containerd.grpc.v1.cri".registry.mirrors."registry:${REGISTRY_PORT}"]
+            endpoint = ["http://registry:${REGISTRY_PORT}"]
+        EOF
+        for node in $(kind get nodes); do
+          docker exec "${node}" sh -c "echo $(docker inspect --format '{{.NetworkSettings.IPAddress }}' "${REGISTRY_CONTAINER_NAME}") registry >> /etc/hosts"
+        done
     - name: Check Kube status
       run: kubectl get pod
