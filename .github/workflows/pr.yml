@@ -14,8 +14,10 @@ jobs:
       uses: engineerd/setup-kind@v0.1.0
       with:
         version: v0.6.1
+        skipClusterCreation: "true"
     - name: Setup Internal Registry
       run: |
+        CLUSTER_NAME="kind"
         REGISTRY_CONTAINER_NAME='kind-registry'
         REGISTRY_PORT='5000'
         docker run -d -p "${REGISTRY_PORT}:5000" --restart=always --name "${REGISTRY_CONTAINER_NAME}" registry:2
@@ -27,7 +29,7 @@ jobs:
           [plugins."io.containerd.grpc.v1.cri".registry.mirrors."registry:${REGISTRY_PORT}"]
             endpoint = ["http://registry:${REGISTRY_PORT}"]
         EOF
-        for node in $(kind get nodes); do
+        for node in $(kind get nodes --name ${CLUSTER_NAME}); do
           docker exec "${node}" sh -c "echo $(docker inspect --format '{{.NetworkSettings.IPAddress }}' "${REGISTRY_CONTAINER_NAME}") registry >> /etc/hosts"
         done
     - name: Check Kube status
