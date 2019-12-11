@@ -32,7 +32,7 @@ jobs:
         for node in $(kind get nodes --name ${CLUSTER_NAME}); do
           docker exec "${node}" sh -c "echo $(docker inspect --format '{{.NetworkSettings.IPAddress }}' "${REGISTRY_CONTAINER_NAME}") registry >> /etc/hosts"
         done
-    - name: Install Camel K CLI
+    - name: Get Camel K CLI
       run: |
         CAMEL_K_VERSION=1.0.0-M4
         mkdir tmp && cd tmp
@@ -41,7 +41,11 @@ jobs:
         sudo mv kamel /usr/bin/
         cd ..
         rm -rf tmp
-    - name: Check Kube status
-      run: kubectl get pod
-    - name: Check Camel K status
-      run: kamel version
+    - name: Install Camel K
+      run: kamel install --registry=registry:5000 --registry-insecure
+    - name: Check installation
+      run: |
+        kubectl get pod
+        sleep 30
+        kubectl get pod
+        
