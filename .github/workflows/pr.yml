@@ -12,5 +12,5 @@ jobs:
       uses: actions/checkout@v1
     - name: KinD (Kubernetes in Docker) Action
       uses: engineerd/setup-kind@v0.1.0
-    - name: Run a one-line script
-      run: echo Hello, world!
+    - name: Check Kube status
+      run: kubectl get pod
