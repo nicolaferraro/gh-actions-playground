@@ -45,9 +45,10 @@ jobs:
       run: kamel install --registry=registry:5000 --registry-insecure
     - name: Check installation
       run: |
-        sleep 15
-        kubectl get pod
         sleep 60
         kubectl get pod
-        sleep 60
-        kubectl get pod
+        kamel run hello.groovy
+        for i in {0..100}; do
+          sleep 5
+          kubectl get pod
+        done
