@@ -45,7 +45,4 @@ jobs:
       run: kamel install --registry=registry:5000 --registry-insecure
     - name: Check installation
       run: |
-        kubectl get pod
-        sleep 30
-        kubectl get pod
-        
+        timeout -sHUP 3m watch kubectl get pod
