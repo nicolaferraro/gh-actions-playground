@@ -68,7 +68,7 @@ jobs:
         mkdir -p ./build/_output/bin
         cp ./kamel ./build/_output/bin/
         echo "Building the images"
-        export IMAGE=${CAMEL_K_REGISTRY}:5000/apache/camel-k:$(make version)
+        export IMAGE=localhost:5000/apache/camel-k:$(make version)
         docker build -t "${IMAGE}" -f build/Dockerfile .
         docker push ${IMAGE}
         echo "installing camel k cluster resources"
