@@ -55,6 +55,10 @@ jobs:
         kubectl describe nodes
     - name: Run IT
       run: |
+        # Compute registry parameters
+        CAMEL_K_REGISTRY=$(docker inspect --format '{{.NetworkSettings.IPAddress }}' "kind-registry")
+        echo "Using registry ${CAMEL_K_REGISTRY}:5000"
+        
         echo "Build project"
         cd apache-camel-k
         make build-kamel
@@ -64,14 +68,14 @@ jobs:
         mkdir -p ./build/_output/bin
         cp ./kamel ./build/_output/bin/
         echo "Building the images"
-        export IMAGE=docker.io/apache/camel-k:$(make version)
+        export IMAGE=${CAMEL_K_REGISTRY}:5000/apache/camel-k:$(make version)
         docker build -t "${IMAGE}" -f build/Dockerfile .
+        docker push ${IMAGE}
         echo "installing camel k cluster resources"
         ./kamel install --cluster-setup
-        # Compute registry parameters
-        CAMEL_K_REGISTRY=$(docker inspect --format '{{.NetworkSettings.IPAddress }}' "kind-registry")
-        echo "Using registry ${CAMEL_K_REGISTRY}:5000"
+      
+        # Then run integration tests
         export KAMEL_INSTALL_REGISTRY=${CAMEL_K_REGISTRY}:5000
         export KAMEL_INSTALL_REGISTRY_INSECURE=true
-        # Then run integration tests
+        export KAMEL_INSTALL_OPERATOR_IMAGE=${IMAGE}
         make test-integration
