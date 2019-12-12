@@ -35,8 +35,6 @@ jobs:
     - name: Get Camel K CLI
       run: |
         CAMEL_K_VERSION=1.0.0-M4
-        CAMEL_K_REGISTRY=$(docker inspect --format '{{.NetworkSettings.IPAddress }}' "${REGISTRY_CONTAINER_NAME}")
-        echo "Using registry ${CAMEL_K_REGISTRY}..."
         mkdir tmp && cd tmp
         curl -L --silent https://github.com/apache/camel-k/releases/download/${CAMEL_K_VERSION}/camel-k-client-${CAMEL_K_VERSION}-linux-64bit.tar.gz -o camel-k-client-${CAMEL_K_VERSION}-linux-64bit.tar.gz
         tar xzf camel-k-client-${CAMEL_K_VERSION}-linux-64bit.tar.gz
@@ -44,7 +42,10 @@ jobs:
         cd ..
         rm -rf tmp
     - name: Install Camel K
-      run: kamel install --registry=registry:5000 --registry-insecure
+      run: |
+        CAMEL_K_REGISTRY=$(docker inspect --format '{{.NetworkSettings.IPAddress }}' "${REGISTRY_CONTAINER_NAME}")
+        echo "Using registry ${CAMEL_K_REGISTRY}..."
+        kamel install --registry=${CAMEL_K_REGISTRY}:5000 --registry-insecure
     - name: Check installation
       run: |
         sleep 60
