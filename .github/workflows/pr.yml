@@ -8,8 +8,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Project
-      uses: actions/checkout@v1
+    #- name: Checkout Project
+    #  uses: actions/checkout@v1
+    - name: Checkout
+      run: |
+        git clone https://github.com/apache/camel-k
+    - name: Info
+      run: |
+        ls -lart
+    - name: Set Up Java
+      uses: actions/setup-java@v1
+      with:
+        java-version: 1.8
+    - name: Set Go
+      uses: actions/setup-go@v1
+      with:
+        go-version: 1.13.x
     - name: Get KinD (Kubernetes in Docker)
       uses: engineerd/setup-kind@v0.1.0
       with:
@@ -33,27 +47,28 @@ jobs:
         for node in $(kind get nodes --name ${CLUSTER_NAME}); do
           docker exec "${node}" sh -c "echo $(docker inspect --format '{{.NetworkSettings.IPAddress }}' "${REGISTRY_CONTAINER_NAME}") registry >> /etc/hosts"
         done
-    - name: Get Camel K CLI
+    - name: Info
       run: |
-        CAMEL_K_VERSION=1.0.0-M4
-        mkdir tmp && cd tmp
-        curl -L --silent https://github.com/apache/camel-k/releases/download/${CAMEL_K_VERSION}/camel-k-client-${CAMEL_K_VERSION}-linux-64bit.tar.gz -o camel-k-client-${CAMEL_K_VERSION}-linux-64bit.tar.gz
-        tar xzf camel-k-client-${CAMEL_K_VERSION}-linux-64bit.tar.gz
-        sudo mv kamel /usr/bin/
-        cd ..
-        rm -rf tmp
-    - name: Install Camel K
+        kubectl cluster-info
+        kubectl describe nodes
+    - name: Run IT
       run: |
+        cd camel-k
+        echo "Build project"
+        make build-kamel
+        echo "Adding maven artifacts to the image context"
+        make PACKAGE_ARTIFACTS_STRATEGY=download package-artifacts
+        echo "Copying binary file to docker dir"
+        mkdir -p ./build/_output/bin
+        cp ./kamel ./build/_output/bin/
+        echo "Building the images"
+        export IMAGE=docker.io/apache/camel-k:$(make version)
+        docker build -t "${IMAGE}" -f build/Dockerfile .
+        echo "installing camel k cluster resources"
+        ./kamel install --cluster-setup
+        # Compute registry parameters
         CAMEL_K_REGISTRY=$(docker inspect --format '{{.NetworkSettings.IPAddress }}' "kind-registry")
-        echo "Using registry ${CAMEL_K_REGISTRY}..."
-        kamel install --registry=${CAMEL_K_REGISTRY}:5000 --registry-insecure
-    - name: Check installation
-      run: |
-        sleep 60
-        kubectl get pod
-        kamel run hello.groovy
-        for i in {0..100}; do
-          sleep 5
-          kubectl get pod
-          #for pod in $(kubectl get pod -o name); do echo $pod; kubectl logs $pod || true; done
-        done
+        echo "Using registry ${CAMEL_K_REGISTRY}:5000"
+        export KAMEL_ARGS="--registry=${CAMEL_K_REGISTRY}:5000 --registry-insecure"
+        # Then run integration tests
+        make test-integration
