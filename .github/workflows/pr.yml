@@ -12,7 +12,7 @@ jobs:
     #  uses: actions/checkout@v1
     - name: Checkout
       run: |
-        git clone https://github.com/lburgazzoli/apache-camel-k.git
+        git clone https://github.com/lburgazzoli/apache-camel-k
         git checkout -b flags origin/flags
     - name: Info
       run: |
