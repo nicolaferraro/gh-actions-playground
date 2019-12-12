@@ -13,6 +13,7 @@ jobs:
     - name: Checkout
       run: |
         git clone https://github.com/lburgazzoli/apache-camel-k
+        cd apache-camel-k
         git checkout -b flags origin/flags
     - name: Info
       run: |
@@ -54,7 +55,6 @@ jobs:
         kubectl describe nodes
     - name: Run IT
       run: |
-        cd camel-k
         echo "Build project"
         make build-kamel
         echo "Adding maven artifacts to the image context"
