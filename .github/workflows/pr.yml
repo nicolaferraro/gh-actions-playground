@@ -21,13 +21,14 @@ jobs:
         REGISTRY_CONTAINER_NAME='kind-registry'
         REGISTRY_PORT='5000'
         docker run -d -p "${REGISTRY_PORT}:5000" --restart=always --name "${REGISTRY_CONTAINER_NAME}" registry:2
+        REGISTRY_IP=$(docker inspect --format '{{.NetworkSettings.IPAddress }}' "${REGISTRY_CONTAINER_NAME}")
         cat <<EOF | kind create cluster --config=-
         kind: Cluster
         apiVersion: kind.x-k8s.io/v1alpha4
         containerdConfigPatches: 
         - |-
-          [plugins."io.containerd.grpc.v1.cri".registry.mirrors."registry:${REGISTRY_PORT}"]
-            endpoint = ["http://registry:${REGISTRY_PORT}"]
+          [plugins."io.containerd.grpc.v1.cri".registry.mirrors."${REGISTRY_IP}:${REGISTRY_PORT}"]
+            endpoint = ["http://${REGISTRY_IP}:${REGISTRY_PORT}"]
         EOF
         for node in $(kind get nodes --name ${CLUSTER_NAME}); do
           docker exec "${node}" sh -c "echo $(docker inspect --format '{{.NetworkSettings.IPAddress }}' "${REGISTRY_CONTAINER_NAME}") registry >> /etc/hosts"
