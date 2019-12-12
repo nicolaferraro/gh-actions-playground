@@ -51,5 +51,5 @@ jobs:
         for i in {0..100}; do
           sleep 5
           kubectl get pod
-          for pod in $(kubectl get pod -o name); do echo $pod; kubectl logs $pod; done
+          for pod in $(kubectl get pod -o name); do echo $pod; kubectl logs $pod || true; done
         done
