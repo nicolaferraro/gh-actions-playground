@@ -43,7 +43,7 @@ jobs:
         rm -rf tmp
     - name: Install Camel K
       run: |
-        CAMEL_K_REGISTRY=$(docker inspect --format '{{.NetworkSettings.IPAddress }}' "${REGISTRY_CONTAINER_NAME}")
+        CAMEL_K_REGISTRY=$(docker inspect --format '{{.NetworkSettings.IPAddress }}' "kind-registry")
         echo "Using registry ${CAMEL_K_REGISTRY}..."
         kamel install --registry=${CAMEL_K_REGISTRY}:5000 --registry-insecure
     - name: Check installation
