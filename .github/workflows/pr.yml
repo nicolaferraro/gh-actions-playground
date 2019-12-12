@@ -56,6 +56,7 @@ jobs:
     - name: Run IT
       run: |
         echo "Build project"
+        cd apache-camel-k
         make build-kamel
         echo "Adding maven artifacts to the image context"
         make PACKAGE_ARTIFACTS_STRATEGY=download package-artifacts
